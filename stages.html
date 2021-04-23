@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="UTF-8" />
+        <title>CV en ligne</title>
+      <link rel="stylesheet" media="screen and (min-width :1201px)" href="stylecv.css"/>
+	    <link rel="stylesheet" media="screen and (max-width :1200px)" href ="stylecvmobile.css"/>
+		<meta name="viewport" content="width=max-device-width, initial-scale=1"/>
+	</head>
+	<body>
+		<header>
+		    <div>
+		        <h1 id="header">Expériences professionnelles</h1>
+            </div>
+		    <p>Vous retrouverez ici l'ensemble de mes expériences en rapport avec l'informatique ou la géomatique au sein du monde professionnel.</p>
+		    <a href="index.html"><p>Retourner à la page principale</p></a>
+		</header>
+		
+		<section2> 
+            <article>
+                <a href = https://www.calvados.fr/accueil/le-departement/routes-environnement--territoire/amenagement-du-territoire/systeme-dinformation-geographiqu.html#:~:text=Le%20p%C3%B4le%20SIG%20(Syst%C3%A8me%20d,%2C%20les%20donn%C3%A9es%20environnementales%2C%20etc. target="_blank"><img id = "polesig" src="images/calvados.png" alt="Page du Pôle SIG"></a></figure>
+                <h1>Stage au sein du Pôle SIG du Département du Calvados</h1>
+	            <h1>De mai à août 2020</h1>
+				<br><br><br><br><br>
+                <p id="polesig2">Le Pôle SIG (Sytèmes d'Information Géographique) du Département du Calvados a pour mission de collecter et centraliser numériquement les données géographiques départementales ainsi que les mettre à dispostion des autres services. Le Département SIG était à la recherche d'un stagiaire dans le but d'accompagner le Pôle SIG pour ses diverses tâches en cours et c'est à cette occassion que j'ai pu effectué un stage de 3 mois au sein de ce service. Le stage s'est articulé autour de 3 problèmatiques majeures.</p>
+                <h2>L'appariement automatique des itinéraires de randonnées sur la BDTopo de l'IGN</h2>
+                <p><span class="objectif">Objectif :</span> <span class = "explication">Automatiser la rectification des erreurs de tracé sur des polylignes obtenues via GPS.</span></p> 
+                <p>Le but était de trouver un moyen de corriger des erreurs de géométrie sur des données obtenues via relevés GPS. La solution retenue a été a création d'un code SQL afin d'apparier les données GPS incorrectes sur d'autres données géométriquement correctes afin de corriger les premières. </p>
+                <h2>Mise en place de géotraitements avec PGRouting</h2>
+                <p><span class="objectif">Objectif :</span> <span class = "explication">Calculer automatiquement le chemin le plus court entre deux emplacements/Créer des isodistances autour d'un point.</span></p> 
+                <p>PGRouting est une extension de PostGis proposant des fonctionnalités de routage géospatial et d'autres analyses de réseaux. Il permet ainsi de réaliser plusieurs géotraitements topologiques. Le Pôle SIG souhaitait réaliser des essais afin de mieux comprendre le fonctionnement des différentes fonctions de PGRouting. J'ai ainsi pu élabore un code SQL afin de calculet l'itinéraire le plus court entre deux points ou tronçons de route ainsi qu'n second code pour créer des isodistances autour d'un point.</p>
+                <h2>Alimenter en données data.calvados.fr</h2>
+                <p><span class="objectif">Objectif :</span> <span class = "explication">Diffuser des données en ligne en open data.</span></p> 
+                <p>Le Département dispose d'une base de données SIG qui alimente ses différents outils : Mapéo Calvados, SIR, Calvados Atlas. En complément de ces outils, le Département du Calvados a souhaité mettre en ligne un catalogue de données géographiques dont certaines données seraient en libre téléchargement : data.calvados.fr.</p>
+                <p>J'ai donc utilisé le logiciel FME, un outil de traitements de données , afin d'automatiser l'extraction des données de la base de données SIG afin de permettre leur publication sur data.calvados.fr et data.gouv.fr. via des scripts.</p>
+                
+			</article>
+    
+        </section2>
+     
+        <footer>
+        <a href="#header">Retourner en haut de la page</a>
+        </footer>
+    </body>
+     
+
+</html>

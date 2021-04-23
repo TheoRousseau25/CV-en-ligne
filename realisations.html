@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+    
+     <head>
+        <meta charset="UTF-8" />
+        <title>CV en ligne</title>
+        <link rel="stylesheet" media="screen and (min-width :1201px)" href="stylecv.css"/>
+        <link rel="stylesheet" media="screen and (max-width :1200px)" href ="stylecvmobile.css"/>
+        <meta name="viewport" content="width=max-device-width, initial-scale=1"/>
+	</head>
+	<body>
+		<header>
+		    <div>
+		        <h1 id="header">Réalisations</h1>
+        </div>
+		    <p>Cette page est consacrée aux principaux projets sur lesquels j'ai pu travailler, que ce soit lors de mes formations scolaires ou durant mes expériences professionnelles.</p>
+		    <a href="index.html"><p>Retourner à la page principale</p></a>
+            <nav>
+            <ol>
+                <li><a href="#stage">Stage Pôle SIG</a></li>
+                <li><a href="#SIG-DAT">Licence Pro SIG-DAT</a></li>
+                <li><a href="#licencegeo">Licence de Géographie</a></li>
+            </ol>
+            </nav>
+        </header>
+		
+	    <section4> 
+            <article>
+                <h3 id="stage"> L'appariement automatique des itinéraires de randonnée sur la BDTopo de l'IGN</h3>
+                <h3>Stage au Département du Calvados</h3>
+                <fig><img src="images/cartevaldalliere.jpg" alt="Carte des relevés GPS de Valdallière"></fig>
+                <p>Principal projet sur lequel j'ai travaillé durant mon stage au sein du Pôle SIG du Département du Calvados. Pour le remettre dans son contexte, Calvados Attractivité, l'agence d'attractivité créée à l'initiative du Comité Départemental du Tourisme du Calvados, a effectué des relevés GPS sur le terrain afin d'obtenir le tracé des itinéraires de randonnées présents sur le territoire départemental, cela dans l'objectif final de les intégrer au portail cartographique Mapéo Calvados.<br>
+                <figure  id = "figun"><img src="images/erreurgps.jpg" alt="Exemple d'une erreur du relevé GPS"><figcaption>Exemple d'une erreur de tracé obtenue avec le relevé GPS</figcaption></figure>
+				Cependant, une fois le travail de collecte effectué, les données nécessitaient un post-traitement pour corriger la qualité géométrique des données qui étaient parfois mauvaises. En effet, les relevés GPS n'étaient pas précis et il arrivait parfois que le tracé obtenu s'éloigne de plusieurs mètres des coordonnées réelles de l'objet que l'on voulait cartographier. </p>
+                <p>Ainsi, l'objectif ici a été d'apparier les polylignes obtenues via relevé GPS sur le tracé de la BDTopo de l'IGN, qui est géométriquement plus précis. Ce travvail aurait pû être réalisé manuellement, mais cela aurait pris un temps considérable, la table contenant 749 objets. Il a donc été jugé plus efficace d'automatiser le traitement.<p>
+                <p>Les outils que j'ai utilisé pour réaliser ce projet onté été le logiciel QGIS 3.4, le système de gestion de base de données PostgreSQL et son extension PostGIS ainsi que l'application Open Jump.</p>
+                <p>Pour faire ce traitement, j'ai choisi de faire d'abord des essais sur une zone test : la commune de Valdallière. </p>
+                <h4>Traitement automatique via PostGis </h4>
+                <p>La difficulté ici était que QGIS ne disposait pas d'outils rapides afin de faire correspondre une entité vectorielle à une autre. L'idée a donc été de, dans un premier temps, convertir les polylignes des itinéraires de randonnées en points, de les repositionner sur les polylignes de la BDTopo puis de retransformer ces points en polylignes afin d'obtenir des itinéraires de randonnées au bon tracé.</p>
+                <fig><img src="images/schemageotraitements.png" alt="Schéma des géotraitements à réaliser"></fig><figcaption>Schéma représentant les différents géotraitements à réaliser</figcaption>
+                <p>L'ensemble du traitement à été réaliser sous forme de requête SQL sous PostGis. Vous en trouverez quelques extraits ci dessous, le code complet étant disponible dans mon rapport de stage téléchargeable en bas de cet article.</>
+                 <figure id ="figdeux"><img src="images/multipoints.jpg" alt="Conversion des polylignes"><figcaption>Conversion des polylignes en multipoints</figcaption></i></figure>
+				<h4>Densification  des noeuds des itinéraires de randonnée et conversion des multipoints</h4> 
+               
+                <code> <p>CREATE TABLE theo.chemins_entretenus_valdalliere_multipoints AS<br><br>
+	            SELECT id, maitre_oeu, km_aide_dp, date_maj, nom_epci, ST_AsMultiPoint(st_segmentize (geom, 1))::geometry(MULTIPOINT,2154) as geom<br><br>
+	            FROM theo.chemins_entretenus_valdalliere_2d;</p></code>
+                <br><br><br><br><br><br><h4 id="titre">Création des shortest lines entre les points des itinéraires de randonnée et la couche unifiée de la BDTopo</h4>
+                <figure id="figtrois"><img src="images/shortestlines.png" alt="Création des shortest lines"><figcaption>Création des shortest lines</figcaption></figure>
+                <code><p>CREATE TABLE theo.shortestlines AS <br>
+                SELECT ST_Shorestline(a.geom) as geom<br>
+                FROM theo.chemins_entretenus_valdalliere_points a, theo.bdtopo_routes_valdalliere_union_b;</p></code>
+                <br><br><br><br><br><br><br>
+				<br><br><br><br><br><br><br><h4>Création de points à la fin des shortest lines</h4>
+                <figure id ="figquatre"><img src="images/endedpoints.png" alt = "Création des ended points"><figcaption>Création des ended points à la fin des shortest lines</figcaption></figure>
+                <code> <p>CREATE TABLE theo.shortest_endpoints AS<br>
+                SELECT ST_Endpoint(a.geom) as geom<br>
+                FROM theo.shortestlines_join as;</p></code>
+                <br><br><br><br><br><br><br>
+				<br><br><br><br><br><br><br>
+				<h4>Résultat final</h4>
+                <p>L'utilisation de la fonction ST_ShortestLine m'a donné un résultat satisfaisant avec un très faible pourcentage d'erreurs. La géométrie des itinéraires de randonnée est bien corrigée en dehors de quelques segments qui manquent parfois au résultat final.</p>
+                <fig><img src="images/valdallierefinal.png" alt="Résultat final"></fig>
+				<a href="documents/Rapport_stage.pdf" download="documents/Rapport_stage.pdf"><p>Télécharger mon rapport de stage complet</p></a>
+            </article>
+ 
+            <article>
+                <h3 id="SIG-DAT">Diagnostic territorial du Pays de Falaise</h3>
+                <h3>Licence pro SIG-DAT</h3>
+                <fig><img src="images/paysdefalaise.jpg" alt="Carte du Pays de Falaise"></fig>
+                <p>Projet sur lequel j'ai travaillé avec le reste de ma classe tout au long de l'année durant ma licence professionnelle SIG-DAT à Caen. L'objectif ici était de dresser un diagnostic général de l'ensemble du territoire du Pays de Falaise, une intercommunalité de 58 communes située dans le Département du Calvados, c'est à dire observer, décrire et tenter d'expliquer les différents aspects qui la composent : services et équipements présents sur le territoire, mobilité, emplois ou encore situation socio-économique. 
+                <p>Ce fut donc un travail de fond et de durée réalisé avec 10 autres étudiants. Le travail à réaliser a été ordonné comme tel : recherche de données et documentation sur le pays de Falaise, définition des acteurs du territoire, classement et tri des informations recueillies, exploitation des données et rédaction, définition du plan, classement des données, recherches et développement selon le plan détaillé, harmonisation des différents travaux dans le but d’obtenir le rapport rédigé final.</p>
+                <h4>Exploitation des données via des réalisations cartographiques</h4>
+                <figure id="figun"><img src="images/densitepopulation.png" alt="Densité de population dans le Calvados"><figcaption>Carte de la densité de population dans le Calvados</figcaption></figure>
+                <p>Au cours de la formation Licence Professionnelle Système d’Information Géographique, Diagnostic et Aménagement du Territoire, un enseignement sur la sémiologie graphique a été donné. Nous nous en sommes inspirés afin de créer une cohérence graphique dans le visuel du rendu du diagnostic territorial du pays de Falaise mais également et surtout en ce qui concerne la création de cartes et de graphiques. « Sémiologie graphique, les diagrammes, les réseaux, les cartes » de J.Bertin a ainsi épaulé le groupe de travail pour donner cette harmonie. Une charte graphique a été créée en définissant l’échelle, les couleurs à utiliser pour faire ressortir les informations, la représentation de l’orientation, la typographie ...</p>
+                <h4>Enquête sur le terrain</h4>
+                <p>Nous avons aussi, au cours de l'année, réaliser plusieurs sorties de terrain afin de récupérer des documents au sein des maires des communes de l'intercommunalité, réaliser des micro-trottoirs auprès des habitants et faire des photos de terrain. Plus largement, nous avons aussi réaliser une grande enquête par questionnaire auprès des travailleuses du service à la personne (services d'aide et d'accompagnement, infirmières à domicile, aide à domicile et EPHAD) exercant sur le territoire du Pays de Falaise afin d'en savoir plus sur leur rapport à leur travail ainsi qu'à leur territoire.</p>
+                <p>Tout ceci a eu pour but de dresser les profils des interlocuteurs dans le but de comprendre qui sont les travailleurs ou futurs travailleurs du Pays de Falaise, pourquoi ont-ils choisi cette intercommunalité ?, et pourquoi cette profession ?. La réalisation de l’enquête s’est effectuée sur le logiciel « SPHINX » qui permet la rédaction, le traitement et l’analyse des enquêtes. </p>
+                <fig><img src="images/questionnaire.png" alt="Extrait du questionnaire"></fig><figcaption>Extrait de l'analyse des questionnaires</figcaption>
+                <p>Ce projet de diagnostic territorial a permis à tous de gérer et de s’approprier un projet concret avec une grande liberté d’action. De plus, le diagnostic territorial exigeant une vision globale de ce qui se passe dans un territoire, il a été indispensable de mettre à profit les différentes unités d’enseignements théoriques et techniques que la formation a pu apporter comme la connaissance des sociétés, la gestion de projet ou encore les différents types de méthodologie appliquée au SIG et la gestion de bases de données.</p>
+                <a href="documents/Rendu-final-Diagnostic.pdf" download="documents/Rendu-final-Diagnostic.pdf"><p>Télécharger le diagnostic complet</p></a>
+            </article>
+            <article>
+                <h3>Cartographie et analyse de l'évolution du bâti dans les communes limitrophes de la forêt de Cerisy</h3>
+                <h3>Licence pro SIG-DAT</h3>
+                <fig><img src="images/foretcerisy.PNG" alt="Communes limitrophes de la forêt de Cerisy"></fig>
+                <p>La forêt domaniale de Cerisy se situe à environ 40 km de Caen et occupe près de 2127 ha. En plus de
+                comporter le statut de forêt domaniale, et par la présence d’habitats d’intérêt communautaire et typique
+                au niveau européen, elle fait aussi l’objet d’un classement en zone Natura 2000. La présence du carabe doré
+                à reflets cuivrés (ou chrysocarabus
+                auronitens SSP cupreonitens)
+                classe également la forêt
+                domaniale de Cerisy comme
+                Réserve Naturelle Nationale.</p>   
+                <p>Ce projet tutoré réalisé lors de la licence SIG-DAT avec 5 autres étudiants d'analyser l'évolution du bâti autour de cette forêt, et donc l'évolution de l'urbanisation des communes limitrophes à cette forêt entre 1947 et 2016.</p>
+                <h4>Un travail de photo-interprétation</h4>
+				<figure id="figun"><img src="images\balleroy.png" alt="Exemple de la commune de Balleroy"><figcaption>Evolution du bâti dans la commune de Balleroy-sur-Drôme</figcaption></figure>
+                <p>Pour cette analyse, nous avons réalisé un travail de photo-interprétation. C'est à dire que nous avons récupéré les photos aériennes de l'IGN réalisées au dessus des communes limitrophes à trois dates différentes (1947, 1979 et 2016), nous les avons étudié afin de repérer et numériser le bâti sous forme de donnée numérique.</p>
+                <p>De cette façon, nous avons pu connaitre, pour chaque commune, le bâti qui avait déjà été construit en 1947, celui construit entre 1947 et 1979, et celui entre 1979 et 2016 et ainsi voir l'évoltuion du bâti au fil du temps.</p>
+                <p>Bien sûr, il arrive parfois que le bâti ne survive pas toujours à l'épreuve du temps, nous avons aussi analysé pour chaque commune le pourcentage bâti qui a été détruit entre 1947 et 1979 puis entre 1979 et 2016. </p>
+                <p>Pour deux des communes, Bérigny et Balleroy, il a même été possible de récupérer le cadastre napoléonien de 1810, 1830 et 1866 et ainsi de procéder à la même analyse entre ces trois dates.</p>    
+                <h4>Analyse statistique</h4>
+                <p>Une fois le travail de photo-interprétation effectué, nous avons pu faire une analyse statistique des résultats obtenus : superficie du bâti par date et taux d'évolution entre chacune d'elle.</p>
+                <fig><img src="images/statistiquesballeroy.png" alt="Statistiques sur Balleroy"></fig><figcaption>Statistiques de l'évolution du bâti dans la commune de Balleroy-sur-Drôme</figcaption>
+                <a href="documents/Projet-Tutore-Cerisy.pdf" download="documents/Projet-Tutore-Cerisy.pdf"><p>Télécharger le projet complet</p></a>
+            </article>
+            <article>
+                <h3>Les deux Corées</h3>
+                <h3>Licence pro SIG-DAT</h3>
+               <fig><img src="images/coree.png" alt="Les Deux Corées"></fig>
+                <p>Au cours de la licence pro SIG-DAT, j'ai dû réalisé un travail d'étude sur un pays étranger à l'aide des outils SIG. J'ai donc choisi d'étudier la péninsule de Corée, et plus précisément la relation entre la Corée du Nord et la Corée du Sud et les enjeux géopolitiques et économiques qui entourent cette relation. Ce projet a été réalisé sous la forme d'une story map (story board narratif associant du texte à des images et des cartes).</p>
+                <h4>Création d'une geodatabase</h4>
+                <p>L'objectif de ce projet était de nous faire gérer une base de données géographiques sur ArcMap (géodatabase). Il a en effet fallu trouver par nous même un maximum de données sur le pays en question. Plusieurs sites m'ont été utiles pour cela : ArcGis Online; le site des données géographiques de la Nasa Earthdata.Nasa, Natural Earth ou encore Geofabrik. Une fois les données collectées, il a fallu les trier et les organiser dans la geodatabase.</p>
+                <fig><img src="images/storymap.png" alt="Story Map"></fig><figcaption>Capture d'écran de la story map</figcaption>
+                <h4>Analyse géographique</h4>
+                <p>Une fois la geodatabe créée, j'ai procédé à plusieurs géotraitements afin d'analyser la problématique, c'est à dire les enjeux économiques et géopolitiques de la relation inter-coréenne : pourcentage de la population sud-coréenne se trouvant dans la zone de tir de l'artillerie nord-coréenne, calcul d'un indice de modernité pour voir les disparités économiques entre la Corée du Nord et la Corée du Sud.</p>
+                <fig><img src="images/geotraitement.png" alt = "Géotraitement"></fig><figcaption>Exemple d'un géotraitement</figcaption>
+                <a href="https://www.arcgis.com/apps/Cascade/index.html?appid=55ef219c73e748608ce16b9ac174dc84" target="_blank"><p>Voir la story map complète</p></a>
+            </article>
+            <article>
+                <h3 id="licencegeo">Etude préalable à l'implantation d'un parc éolien en Bourgogne</h3>
+                <h3>Licence de Géographie</h3>
+                <fig><img src="images/reliefbourgogne.PNG" alt="Relief de la Bourgogne"></fig>
+                <p>Pour ce projet, réalisé en binôme avec un autre étudiant en deuxième année de licence de Géographie à l'Université de Besançon, nous devions réaliser une étude pour l'implantation potentielle d'un parc éolien au sein d'une région française et nous avons choisi la Bourgogne. 
+                <h4>Prise en compte de l'ensemble des facteurs techniques et environnementaux</h4>
+                <figure id="figun"><img src="images/ventsbourgogne.png" alt="Vitesse du vent en Bourgogne"><figcaption>Carte de la vitesse moyenne du vent en Bourgogne</figcaption></figure>
+                <p>Pour mener à bien cette tâche, il a fallu identifier l'ensemble des aspects techniques qui peuvent intervenir lors de l'implantation d'un parc éolien sur un terrain (vitesse du vent, pentes, risque d'accidents de terrain ou encore la proximité avec un poste électrique) mais aussi les enjeux environnementaux (proximité avec les habitations, impact possible sur la biodiversité ainsi que sur les paysages). </p>
+                <br><br><br><br><br>
+				<br><br><br><br><br><h4>Cartographie finale des terrains disponibles</h4>
+                <p>Une fois l'ensemble des analyses réalisés, nous les avons toutes mises en commun afin d'obtenir la carte finale de l'ensemble des zones bourguigonnes pouvant potentiellement accueillir un parc éolien.</p>
+               <fig><img src="images/eoliennesfinal.PNG" alt = "Résultat final"></fig>
+                <a href="documents/Projet_Eoliennes.pdf" download = "documents/Projet_Eoliennes.pdf"><p>Télécharger l'étude complète</p></a>
+            </article>
+            <article>
+                <h3>Parc naturel de la Haute Vallée de la Loue</h3>
+                <h3>Licence de Géographie</h3>
+                <p>En deuxième année de licence de géographie à l'Université de Besançon, nous avons aussi dû réaliser un poster pour présenter un projet d'implantation d'un nouveau parc naturel sur le territoire français. Avec deux autres étudiants, nous avons choisi d'imaginer un projet de parc naturel dans la Haute Vallée de la Loue, dans le département du Doubs.</p>
+                <h4>Présentation de la zone</h4>
+                <p>Sur ce poster, il a fallu expliquer pourquoi cette zone avait vocation à devenir un parc naturel protégé. Nous avons donc tenté de montrer son intérêt d'un point de vue de la biodiversité, autant du point de vue de la faune, puisque la Haute Vallée de la Loue est un lieu d'habitat pour des espèces comme le lynx,espèce protégée, le chamoi ou l'hermine; que de la flore, avec la présence de l'anémone pulsatille.</p>
+                <p>Plusieurs sites de la Haute Vallée sont aussi d'un grand intérêt puisqu'on y retrouve la Source de la Loue, une rivière résurgente du Doubs, ainsi que les Gorges de Nouailles, un canyon s'étalant sur 4km près de la Source du Loue.</p>
+                <p>Nous avons aussi dû justifier notre choix en proposant des projets afin de promouvoir le tourisme éco-responsable ainsi que des mesures pour protéger la biodiversité</p>
+                <fig><img src="images/loue.png" alt="Haute Vallée de la Loue"></fig>
+                <a href="documents/Parc naturel.pdf" download="documents/Parc naturel.pdf"><p>Télécharger le poster</p></a>
+            </article>
+		</section4>
+     
+        <footer>
+            <a href="#header">Retourner en haut de la page</a>
+        </footer>
+     
+    </body>
+     
+
+</html>
